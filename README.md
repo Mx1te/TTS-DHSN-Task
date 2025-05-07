@@ -15,3 +15,5 @@ TODO-List:
 Info and Doc's:
 
 https://freetts.sourceforge.io/docs/index.html#how_app
+
+https://www.youtube.com/watch?v=8XaAEPOvn6k
