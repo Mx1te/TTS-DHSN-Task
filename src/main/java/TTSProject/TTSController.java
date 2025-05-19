@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+//import java.net.http.HttpHeaders;
 
 @RestController
 public class TTSController {
@@ -29,6 +30,8 @@ public class TTSController {
             }
 
             // FreeTTS konfigurieren
+            System.setProperty("freetts.voices",
+            "com.sun.speech.freetts.en.us.cmu_us_kal.KevinVoiceDirectory");
             VoiceManager vm = VoiceManager.getInstance();
             Voice voice = vm.getVoice("kevin16");
             if (voice == null) return ResponseEntity.status(500).body("Stimme 'kevin16' nicht gefunden.");
