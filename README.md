@@ -27,6 +27,12 @@ mvn install:install-file \
 
 then
 
+u need tesseract installed on your machine for OCR tess4js to function
+(tess4js is just a wrapper for tesseract)
+on linux a "sudo apt install tesseract" should suffice.
+it also needs leptonica for tesseract to work
+"sudo apt install libleptonica-dev"
+
 mvn clean install
 
 then

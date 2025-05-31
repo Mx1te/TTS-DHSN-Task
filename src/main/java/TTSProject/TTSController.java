@@ -1,5 +1,4 @@
 package TTSProject;
-
 import com.sun.speech.freetts.*;
 import com.sun.speech.freetts.audio.AudioPlayer;
 import com.sun.speech.freetts.audio.SingleFileAudioPlayer;
@@ -12,9 +11,12 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import main.java.TTSProject.myOCRHandler;
+import net.sourceforge.tess4j.Tesseract;
 
 import java.io.*;
 //import java.net.http.HttpHeaders;
+import java.net.http.HttpHeaders;
 
 @RestController
 public class TTSController {
@@ -44,7 +46,7 @@ public class TTSController {
             audioPlayer.close();
             voice.deallocate();
 
-            return ResponseEntity.ok("Text verarbeitet. Du kannst dir die Audio-Datei unter /audio anhören.");
+            return ResponseEntity.ok("Text verarbeitet. Du kannst dir die Audio-Datei unter /wavedump anhören oder direkt hier der beruhigenden Stimme von Kevin16 lauschen.");
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Fehler: " + e.getMessage());
@@ -62,7 +64,7 @@ public class TTSController {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("audio/wav"))
                 .contentLength(file.length())
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"output.wav\"")
+                .header("inline; filename=\"output.wav\"")
                 .body(resource);
     }
 
@@ -77,6 +79,21 @@ public class TTSController {
                 PDFTextStripper stripper = new PDFTextStripper();
                 return stripper.getText(document);
             }
+        } else if (filename.endsWith(".png") || filename.endsWith(".jpg") || filename.endsWith(".jpeg")) {
+            File tempFile = File.createTempFile("upload_", "_" + file.getOriginalFilename());
+            file.transferTo(tempFile);
+        
+            // Optional: Ausgabe zur Kontrolle
+            System.out.println("Temporäre Datei: " + tempFile.getAbsolutePath());
+
+            myOCRHandler ocrHandler = new myOCRHandler("tessdata", "eng");
+            try {
+                return ocrHandler.parseImage(tempFile);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+            finally {tempFile.deleteOnExit();}
         }
         return null;
     }
