@@ -15,7 +15,6 @@ import main.java.TTSProject.myOCRHandler;
 import net.sourceforge.tess4j.Tesseract;
 
 import java.io.*;
-//import java.net.http.HttpHeaders;
 import java.net.http.HttpHeaders;
 
 @RestController
@@ -30,18 +29,30 @@ public class TTSController {
             if (text == null || text.isBlank()) {
                 return ResponseEntity.badRequest().body("Datei konnte nicht gelesen werden oder war leer.");
             }
-
+            System.out.println("Extrahierter Text: " + text);
             // FreeTTS konfigurieren
             System.setProperty("freetts.voices",
             "com.sun.speech.freetts.en.us.cmu_us_kal.KevinVoiceDirectory");
             VoiceManager vm = VoiceManager.getInstance();
             Voice voice = vm.getVoice("kevin16");
+            System.out.println("Verfügbare Stimmen:");
+            Voice[] voiceList = VoiceManager.getInstance().getVoices();
+            for (int i = 0; i < voiceList.length; i++) {
+                System.out.println("Voice " + i + ": " + voiceList[i].getName());
+            }
             if (voice == null) return ResponseEntity.status(500).body("Stimme 'kevin16' nicht gefunden.");
             voice.allocate();
 
             // AudioPlayer zum WAV-Datei-Speichern
             AudioPlayer audioPlayer = new SingleFileAudioPlayer("wavedump/output", AudioFileFormat.Type.WAVE);
             voice.setAudioPlayer(audioPlayer);
+
+            // Text sprechen OPTIONEN
+
+
+            voice.setPitch(120); // z.B. etwas tiefer
+            voice.setRate(140);  // z.B. langsamer
+            voice.setVolume(1.0f); // z.B. lauter
             voice.speak(text);
             audioPlayer.close();
             voice.deallocate();
