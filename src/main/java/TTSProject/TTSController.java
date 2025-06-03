@@ -21,48 +21,65 @@ import java.net.http.HttpHeaders;
 public class TTSController {
 
     private static final String AUDIO_PATH = "wavedump/output.wav";
-
-    @PostMapping("/api")
-    public ResponseEntity<String> handleUpload(@RequestParam("file") MultipartFile file) {
-        try {
-            String text = extractText(file);
-            if (text == null || text.isBlank()) {
-                return ResponseEntity.badRequest().body("Datei konnte nicht gelesen werden oder war leer.");
-            }
-            System.out.println("Extrahierter Text: " + text);
-            // FreeTTS konfigurieren
-            System.setProperty("freetts.voices",
-            "com.sun.speech.freetts.en.us.cmu_us_kal.KevinVoiceDirectory");
-            VoiceManager vm = VoiceManager.getInstance();
-            Voice voice = vm.getVoice("kevin16");
-            System.out.println("Verfügbare Stimmen:");
-            Voice[] voiceList = VoiceManager.getInstance().getVoices();
-            for (int i = 0; i < voiceList.length; i++) {
-                System.out.println("Voice " + i + ": " + voiceList[i].getName());
-            }
-            if (voice == null) return ResponseEntity.status(500).body("Stimme 'kevin16' nicht gefunden.");
-            voice.allocate();
-
-            // AudioPlayer zum WAV-Datei-Speichern
-            AudioPlayer audioPlayer = new SingleFileAudioPlayer("wavedump/output", AudioFileFormat.Type.WAVE);
-            voice.setAudioPlayer(audioPlayer);
-
-            // Text sprechen OPTIONEN
-
-
-            voice.setPitch(120); // z.B. etwas tiefer
-            voice.setRate(140);  // z.B. langsamer
-            voice.setVolume(1.0f); // z.B. lauter
-            voice.speak(text);
-            audioPlayer.close();
-            voice.deallocate();
-
-            return ResponseEntity.ok("Text verarbeitet. Du kannst dir die Audio-Datei unter /wavedump anhören oder direkt hier der beruhigenden Stimme von Kevin16 lauschen.");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Fehler: " + e.getMessage());
-        }
+    private String parseSSML(String input) {
+        return input.replaceAll("(?i)<pause\\s*/?>", " ... ");  // 3 Punkte als Pause
     }
+    /**
+     * Diese Methode verarbeitet entweder den eingegebenen Text oder den Inhalt der hochgeladenen Datei.
+     * Sie wandelt den Text in Sprache um und speichert die Audiodatei im WAV-Format.
+     *
+     * @param file    Die hochgeladene Datei (optional).
+     * @param rawText Der eingegebene Text (optional).
+     * @return Eine ResponseEntity mit dem Ergebnis der Verarbeitung.
+     */    
+    @PostMapping("/api")
+public ResponseEntity<String> handleUpload(
+        @RequestParam(value = "file", required = false) MultipartFile file,
+        @RequestParam(value = "text", required = false) String rawText) {
+
+    try {
+        String text;
+
+        if (rawText != null && !rawText.isBlank()) {
+            text = parseSSML(rawText); // Text aus Eingabefeld inkl. SSML
+        } else if (file != null && !file.isEmpty()) {
+            text = extractText(file);  // Text aus Datei
+        } else {
+            return ResponseEntity.badRequest().body("Bitte geben Sie Text ein oder laden Sie eine Datei hoch.");
+        }
+
+        if (text == null || text.isBlank()) {
+            return ResponseEntity.badRequest().body("Kein gültiger Text gefunden.");
+        }
+
+        // FreeTTS vorbereiten
+        System.setProperty("freetts.voices", "com.sun.speech.freetts.en.us.cmu_us_kal.KevinVoiceDirectory");
+        VoiceManager vm = VoiceManager.getInstance();
+        Voice voice = vm.getVoice("kevin16");
+
+        if (voice == null) return ResponseEntity.status(500).body("Stimme 'kevin16' nicht gefunden.");
+        voice.allocate();
+
+        voice.setPitch(120);
+        voice.setRate(140);
+        voice.setVolume(1.0f);
+
+        AudioPlayer audioPlayer = new SingleFileAudioPlayer("wavedump/output", AudioFileFormat.Type.WAVE);
+        voice.setAudioPlayer(audioPlayer);
+
+        voice.speak(text);
+
+        audioPlayer.close();
+        voice.deallocate();
+
+        return ResponseEntity.ok("Text verarbeitet. Du kannst dir die Audio-Datei unter /wavedump anhören oder direkt hier der Stimme lauschen.");
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(500).body("Fehler: " + e.getMessage());
+    }
+}
+
 
     @GetMapping("/audio")
     public ResponseEntity<InputStreamResource> getAudio() throws IOException {

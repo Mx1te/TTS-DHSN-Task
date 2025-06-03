@@ -55,12 +55,15 @@
 <body>
     <div class="container">
         <h1>Datei hochladen und TTS generieren</h1>
-        <form action="/api" method="POST" enctype="multipart/form-data">
-            <label for="fileInput">Wählen Sie eine Datei aus:</label>
+        <form id="uploadForm" action="/api" method="POST" enctype="multipart/form-data">
+            <label for="fileInput">Datei auswählen:</label>
             <input type="file" id="fileInput" name="file" accept=".pdf,.txt,.png,.jpg,.jpeg">
-            <button>Hochladen</button>
+            <hr>
+            <label for="textInput">Oder Text eingeben:</label>
+            <textarea id="textInput" name="text" rows="6" cols="40" placeholder="Geben Sie hier den Text ein..."></textarea>
+            <button>Absenden</button>
         </form>
-
+        
         
         <div id="outputText" class="output"></div>
     </div>
